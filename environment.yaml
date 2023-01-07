@@ -1,0 +1,15 @@
+name: master-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - r-base=4.1
+  - r-tidyverse
+  - r-recommended
+  - r-irkernel
+  - jupyter
+  - jupyterlab
+  - awswrangler
+  - pandas
