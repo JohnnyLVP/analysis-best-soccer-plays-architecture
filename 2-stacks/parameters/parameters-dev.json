@@ -1,0 +1,14 @@
+[
+    {
+        "ParameterKey": "pOrganizationName",
+        "ParameterValue": "soccer"
+    },
+    {
+        "ParameterKey": "pApplicationName",
+        "ParameterValue": "datalake"
+    },
+    {
+        "ParameterKey": "pEnvironment",
+        "ParameterValue": "dev"
+    }
+]

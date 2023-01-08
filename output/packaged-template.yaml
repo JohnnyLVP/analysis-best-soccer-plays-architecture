@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Resources to be created by the common stack
+Parameters:
+  pApplicationName:
+    Description: Name of the application (all lowercase, no symbols or spaces)
+    Type: String
+    AllowedPattern: '[a-z0-9]{2,8}'
+    Default: datalake
+  pEnvironment:
+    Description: Environment name
+    AllowedValues:
+    - dev
+    - test
+    - prod
+    Type: String
+    Default: dev
+  pOrganizationName:
+    Description: Name of the organization (all lowercase, no symbols or spaces)
+    Type: String
+    AllowedPattern: '[a-z0-9]{2,9}'
+  pCustomBucketPrefix:
+    Description: S3 Bucket Prefix if different from default. Must be a valid S3 Bucket
+      name
+    Type: String
+    Default: sdlf
+Resources:
+  rS3Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/sdlf-cfn-artifacts-us-east-1-829547505377/foundations/b78746fe47594df57b6091cb0ff7859d.template
+      Parameters:
+        pApplicationName:
+          Ref: pApplicationName
+        pCustomBucketPrefix:
+          Ref: pCustomBucketPrefix
+        pEnvironment:
+          Ref: pEnvironment
+        pOrganizationName:
+          Ref: pOrganizationName
+      Tags:
+      - Key: tagging-policy
+        Value:
+          Fn::Sub: ${pOrganizationName}-${pApplicationName}-${pEnvironment}-foundations
+    Metadata:
+      SamResourceId: rS3Stack

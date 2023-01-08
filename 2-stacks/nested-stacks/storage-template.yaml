@@ -1,0 +1,186 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: S3 and associated Lambda/SQS Resources to be created by the foundations stack
+
+Parameters:
+  pApplicationName:
+    Type: String
+  pEnvironment:
+    Type: String
+  pOrganizationName:
+    Type: String
+  pCustomBucketPrefix:
+    Type: String
+    
+Globals:
+  Function:
+    Runtime: python3.9
+    Handler: lambda_function.lambda_handler
+
+Conditions:
+  UseCustomBucketPrefix: !Not [!Equals [!Ref pCustomBucketPrefix, sdlf]]
+
+Resources:
+  ####### S3 Buckets #########
+  rRawBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        !If [
+          UseCustomBucketPrefix,
+          !Sub "${pCustomBucketPrefix}-raw",
+          !Sub "${pOrganizationName}-${pApplicationName}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-raw",
+        ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+  rRawBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref rRawBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Action: s3:*
+            Effect: Deny
+            Resource:
+              - !Sub arn:aws:s3:::${rRawBucket}/*
+              - !Sub arn:aws:s3:::${rRawBucket}
+            Condition:
+              Bool:
+                aws:SecureTransport: False
+            Principal: "*"
+
+  rRawBucketLakeFormationS3Registration:
+    Type: AWS::LakeFormation::Resource
+    Properties:
+      ResourceArn: !Sub arn:aws:s3:::${rRawBucket}/
+      UseServiceLinkedRole: True
+
+  rStageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        !If [
+          UseCustomBucketPrefix,
+          !Sub "${pCustomBucketPrefix}-stage",
+          !Sub "${pOrganizationName}-${pApplicationName}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-stage",
+        ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+  rStageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref rStageBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Action: s3:*
+            Effect: Deny
+            Resource:
+              - !Sub arn:aws:s3:::${rStageBucket}/*
+              - !Sub arn:aws:s3:::${rStageBucket}
+            Condition:
+              Bool:
+                aws:SecureTransport: False
+            Principal: "*"
+
+  rStageBucketLakeFormationS3Registration:
+    Type: AWS::LakeFormation::Resource
+    Properties:
+      ResourceArn: !Sub arn:aws:s3:::${rStageBucket}/
+      UseServiceLinkedRole: True
+
+  rAnalyticsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        !If [
+          UseCustomBucketPrefix,
+          !Sub "${pCustomBucketPrefix}-analytics",
+          !Sub "${pOrganizationName}-${pApplicationName}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-analytics",
+        ]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+  rAnalyticsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref rAnalyticsBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Action: s3:*
+            Effect: Deny
+            Resource:
+              - !Sub arn:aws:s3:::${rAnalyticsBucket}/*
+              - !Sub arn:aws:s3:::${rAnalyticsBucket}
+            Condition:
+              Bool:
+                aws:SecureTransport: False
+            Principal: "*"
+
+  rAnalyticsBucketLakeFormationS3Registration:
+    Type: AWS::LakeFormation::Resource
+    Properties:
+      ResourceArn: !Sub arn:aws:s3:::${rAnalyticsBucket}/
+      UseServiceLinkedRole: True
+
+  ####### SSM #######
+  rS3CentralBucketSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Master/S3/CentralBucket
+      Type: String
+      Value: !Ref rRawBucket
+      Description: Name of the Central S3 bucket
+  rS3StageBucketSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Master/S3/StageBucket
+      Type: String
+      Value: !Ref rStageBucket
+      Description: Name of the Stage S3 bucket
+  rS3AnalyticsBucketSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Master/S3/AnalyticsBucket
+      Type: String
+      Value: !Ref rAnalyticsBucket
+      Description: Name of the Analytics S3 bucket
+  
+Outputs:
+  oCentralBucket:
+    Value: !Ref rRawBucket
+    Description: Data Lake Ingestion Bucket
+  oStageBucket:
+    Value: !Ref rStageBucket
+    Description: Data Lake Stage Bucket
+  oAnalyticsBucket:
+    Value: !Ref rAnalyticsBucket
+    Description: Data Lake Analytics Bucket

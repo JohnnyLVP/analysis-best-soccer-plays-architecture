@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Resources to be created by the common stack
+
+Parameters:
+  pApplicationName:
+    Description: Name of the application (all lowercase, no symbols or spaces)
+    Type: String
+    AllowedPattern: "[a-z0-9]{2,8}"
+    Default: datalake
+  pEnvironment:
+    Description: Environment name
+    AllowedValues:
+      - dev
+      - test
+      - prod 
+    Type: String
+    Default: dev
+  pOrganizationName:
+    Description: Name of the organization (all lowercase, no symbols or spaces)
+    Type: String
+    AllowedPattern: "[a-z0-9]{2,9}"
+  pCustomBucketPrefix:
+    Description: S3 Bucket Prefix if different from default. Must be a valid S3 Bucket name
+    Type: String
+    Default: sdlf
+
+Resources:
+  ######## S3 #########
+  rS3Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./nested-stacks/storage-template.yaml
+      Parameters:
+        pApplicationName: !Ref pApplicationName
+        pCustomBucketPrefix: !Ref pCustomBucketPrefix
+        pEnvironment: !Ref pEnvironment
+        pOrganizationName: !Ref pOrganizationName
+      Tags:
+        - Key: tagging-policy
+          Value: !Sub ${pOrganizationName}-${pApplicationName}-${pEnvironment}-foundations  
