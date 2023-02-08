@@ -23,13 +23,25 @@ Parameters:
     Description: S3 Bucket Prefix if different from default. Must be a valid S3 Bucket name
     Type: String
     Default: sdlf
+  pDatasetBucket:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/CentralBucket
+    Description: S3 Raw Bucket
+  pStageBucket:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/StageBucket
+    Description: S3 Stage Bucket
+  pAnalyticsBucket:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/AnalyticsBucket
+    Description: S3 Analytics Bucket
 
 Resources:
   ######## S3 #########
   rS3Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./nested-stacks/storage-template.yaml
+      TemplateURL: ./2-nested-stacks/storage-template.yaml
       Parameters:
         pApplicationName: !Ref pApplicationName
         pCustomBucketPrefix: !Ref pCustomBucketPrefix
@@ -37,4 +49,17 @@ Resources:
         pOrganizationName: !Ref pOrganizationName
       Tags:
         - Key: tagging-policy
-          Value: !Sub ${pOrganizationName}-${pApplicationName}-${pEnvironment}-foundations  
+          Value: !Sub ${pOrganizationName}-${pApplicationName}-${pEnvironment}-storage  
+  
+  ######## Processing #########
+  rProcessStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  ./2-nested-stacks/processing-template.yaml
+      Parameters:
+        pDatasetBucket: !Ref pDatasetBucket
+        pAnalyticsBucket: !Ref pAnalyticsBucket
+        pStageBucket: !Ref pStageBucket
+      Tags:
+        - Key: tagging-policy
+          Value: !Sub ${pOrganizationName}-${pApplicationName}-${pEnvironment}-processing  

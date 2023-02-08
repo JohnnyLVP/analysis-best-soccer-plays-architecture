@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: S3 and associated Lambda/SQS Resources to be created by the foundations stack
+
+Parameters:
+  pDatasetBucket:
+    Type: String
+  pStageBucket:
+    Type: String
+  pAnalyticsBucket:
+    Type: String
+    
+Globals:
+  Function:
+    Runtime: python3.9
+    Handler: lambda_function.lambda_handler
+    Timeout: 600
+    MemorySize: 4096
+    Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:336392948345:layer:AWSSDKPandas-Python39:2
+    
+
+Resources: 
+  # Process 1
+  rLambdaRoleProcess1:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: soccer-datalake-process-toStage-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: soccer-datalake-process-toStage-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketVersioning
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${pDatasetBucket}
+                  - !Sub arn:aws:s3:::${pStageBucket}
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub arn:aws:s3:::${pDatasetBucket}/*
+                  - !Sub arn:aws:s3:::${pStageBucket}/*
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Master/*
+  # Process 2
+  rLambdaRoleProcess2:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub soccer-datalake-process-toAnalytics-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub soccer-datalake-process-toAnalytics-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketVersioning
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${pAnalyticsBucket}
+                  - !Sub arn:aws:s3:::${pStageBucket}
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub arn:aws:s3:::${pAnalyticsBucket}/*
+                  - !Sub arn:aws:s3:::${pStageBucket}/*
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/Master/*
+  # Process 1
+  rLambdaProcess1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../3-lambdas/process-stage-a
+      FunctionName: lambda-soccer-datalake-process-toStage
+      Description: Process data from Raw to Stage in Datalake
+      MemorySize: 256
+      Timeout: 300
+      Role: !GetAtt rLambdaRoleProcess1.Arn
+      Events:
+        MatchesRule:
+          Type: Schedule
+          Properties:
+            Input: '{"dataset": "matches"}'
+            Schedule: cron(15 13 * * ? *)
+            Name: SoccerMatchRuleStageA
+            Description: Trigger Lambda at 1:15 PM daily
+        ThreeSixtyRule:
+          Type: Schedule
+          Properties:
+            Input: '{"dataset": "three-sixty"}'
+            Schedule: cron(15 13 * * ? *)
+            Name: SoccerMatchRuleStageA
+            Description: Trigger Lambda at 1:15 PM daily
+        EventsRule:
+          Type: Schedule
+          Properties:
+            Input: '{"dataset": "events"}'
+            Schedule: cron(15 13 * * ? *)
+            Name: SoccerEventsRuleStageA
+            Description: Trigger Lambda at 1:15 PM daily
+
+  # Process 2
+  rLambdaProcess2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../3-lambdas/process-stage-b
+      FunctionName: lambda-soccer-datalake-process-toAnalytics
+      Description: Process data from Stage to Analytics in Datalake
+      MemorySize: 256
+      Timeout: 300
+      Role: !GetAtt rLambdaRoleProcess2.Arn
+      Events:
+        MatchesRule:
+          Type: Schedule
+          Properties:
+            Input: '{"Dataset": "Matches"}'
+            Schedule: cron(15 13 * * ? *)
+            Name: SoccerMatchRuleStabegeB
+            Description: Trigger Lambda at 1:15 PM daily
+        EventsRule:
+          Type: Schedule
+          Properties:
+            Input: '{"Dataset": "Events"}'
+            Schedule: cron(15 13 * * ? *)
+            Name: SoccerEventsRuleStageB
+            Description: Trigger Lambda at 1:15 PM daily
+      
+
+
+

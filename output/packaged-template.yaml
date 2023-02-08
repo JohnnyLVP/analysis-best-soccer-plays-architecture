@@ -23,11 +23,23 @@ Parameters:
       name
     Type: String
     Default: sdlf
+  pDatasetBucket:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/CentralBucket
+    Description: S3 Raw Bucket
+  pStageBucket:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/StageBucket
+    Description: S3 Stage Bucket
+  pAnalyticsBucket:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/AnalyticsBucket
+    Description: S3 Analytics Bucket
 Resources:
   rS3Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/sdlf-cfn-artifacts-us-east-1-829547505377/foundations/b78746fe47594df57b6091cb0ff7859d.template
+      TemplateURL: https://s3.amazonaws.com/sdlf-cfn-artifacts-us-east-1-829547505377/soccer/b78746fe47594df57b6091cb0ff7859d.template
       Parameters:
         pApplicationName:
           Ref: pApplicationName
@@ -40,6 +52,23 @@ Resources:
       Tags:
       - Key: tagging-policy
         Value:
-          Fn::Sub: ${pOrganizationName}-${pApplicationName}-${pEnvironment}-foundations
+          Fn::Sub: ${pOrganizationName}-${pApplicationName}-${pEnvironment}-storage
     Metadata:
       SamResourceId: rS3Stack
+  rProcessStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/sdlf-cfn-artifacts-us-east-1-829547505377/soccer/5c9cf2070e9c9bd9d6ad91a22793eb7b.template
+      Parameters:
+        pDatasetBucket:
+          Ref: pDatasetBucket
+        pAnalyticsBucket:
+          Ref: pAnalyticsBucket
+        pStageBucket:
+          Ref: pStageBucket
+      Tags:
+      - Key: tagging-policy
+        Value:
+          Fn::Sub: ${pOrganizationName}-${pApplicationName}-${pEnvironment}-processing
+    Metadata:
+      SamResourceId: rProcessStack

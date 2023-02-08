@@ -70,14 +70,14 @@ if ! aws s3 ls "$S3_BUCKET" --profile "$PROFILE"; then
 fi
 
 mkdir "$DIRNAME"/output
-sam package --profile "$PROFILE" --template-file "$DIRNAME"/2-stacks/template.yaml --s3-bucket "$S3_BUCKET" --s3-prefix foundations --output-template-file "$DIRNAME"/output/packaged-template.yaml
+sam package --profile "$PROFILE" --template-file "$DIRNAME"/template.yaml --s3-bucket "$S3_BUCKET" --s3-prefix soccer --output-template-file "$DIRNAME"/output/packaged-template.yaml
 
 echo "Checking if stack exists ..."
 if ! aws cloudformation describe-stacks --profile "$PROFILE" --stack-name "$STACK_NAME"; then
   echo -e "Stack does not exist, creating ..."
   aws cloudformation create-stack \
     --stack-name "$STACK_NAME" \
-    --parameters file://"$DIRNAME/2-stacks/parameters/parameters-$ENV".json \
+    --parameters file://"$DIRNAME/5-parameters/parameters-$ENV".json \
     --template-body file://"$DIRNAME"/output/packaged-template.yaml \
     --capabilities "CAPABILITY_NAMED_IAM" "CAPABILITY_AUTO_EXPAND" \
     --profile "$PROFILE"
@@ -92,7 +92,7 @@ else
   update_output=$( aws cloudformation update-stack \
     --profile "$PROFILE" \
     --stack-name "$STACK_NAME" \
-    --parameters file://"$DIRNAME/2-stacks/parameters/parameters-$ENV".json \
+    --parameters file://"$DIRNAME/5-parameters/parameters-$ENV".json \
     --template-body file://"$DIRNAME"/output/packaged-template.yaml \
     --capabilities "CAPABILITY_NAMED_IAM" "CAPABILITY_AUTO_EXPAND" 2>&1)
   status=$?
