@@ -4,11 +4,14 @@ Description: S3 and associated Lambda/SQS Resources to be created by the foundat
 
 Parameters:
   pDatasetBucket:
-    Type: String
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/CentralBucket
   pStageBucket:
-    Type: String
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/StageBucket
   pAnalyticsBucket:
-    Type: String
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /Master/S3/AnalyticsBucket
     
 Globals:
   Function:
@@ -134,7 +137,7 @@ Resources:
           Properties:
             Input: '{"dataset": "three-sixty"}'
             Schedule: cron(15 13 * * ? *)
-            Name: SoccerMatchRuleStageA
+            Name: ThreeSixtyMatchRuleStageA
             Description: Trigger Lambda at 1:15 PM daily
         EventsRule:
           Type: Schedule

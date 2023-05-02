@@ -18,7 +18,7 @@ Globals:
     Handler: lambda_function.lambda_handler
 
 Conditions:
-  UseCustomBucketPrefix: !Not [!Equals [!Ref pCustomBucketPrefix, sdlf]]
+  UseCustomBucketPrefix: !Not [!Equals [!Ref pCustomBucketPrefix, xxxx]]
 
 Resources:
   ####### S3 Buckets #########
@@ -178,9 +178,18 @@ Outputs:
   oCentralBucket:
     Value: !Ref rRawBucket
     Description: Data Lake Ingestion Bucket
+    Export:
+      Name:
+        'Fn::Sub': 'oCentralBucket'
   oStageBucket:
     Value: !Ref rStageBucket
     Description: Data Lake Stage Bucket
+    Export:
+      Name:
+        'Fn::Sub': 'oStageBucket'
   oAnalyticsBucket:
     Value: !Ref rAnalyticsBucket
     Description: Data Lake Analytics Bucket
+    Export:
+      Name:
+        'Fn::Sub': 'oAnalyticsBucket'
