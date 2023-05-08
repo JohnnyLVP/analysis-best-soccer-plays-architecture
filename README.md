@@ -21,4 +21,4 @@ Los miembros que forman parte del equipo
 
 La siguiente es la arquitectura propuesta para la solucion
 
-![Arquitectura Propuesta](4-diagrams/architecture-v1.drawio.png)
+![Arquitectura Propuesta](4-diagrams/arquitectura-tecnica-1-architecture.drawio.png)
