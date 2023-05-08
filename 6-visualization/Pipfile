@@ -1,0 +1,21 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+
+[packages]
+dash = "==1.21.*"
+WordCloud = "==1.8.*"
+plotly = "==5.1.*"
+numpy = "==1.19.*"
+pandas = "==1.1.*"
+Flask = "==1.*"
+sqlalchemy="*"
+gunicorn="*"
+
+
+[requires]
+python_version = "3.8"
